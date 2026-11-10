@@ -3,12 +3,42 @@
 #include<chrono>
 #include<thread>
 #include<vector>
+#include<array>
 
-class object{
+class Object1{
+    //rectangle
+    private:
+    int posX, posY;
+    int sizeX, sizeY;
+    
+    public:
+    Object1(){
+
+    }
+
+};
+
+class Object2{
+    //polygon
+    private:
+    std::vector<std::array<int,2>> vertices;
+
+    public:
+    Object2(){
+
+    }
 
 };
 
 class Camera{
+    private:
+    float posX, posY;
+    float angle, FOV;
+
+    public:
+    Camera(){
+
+    }
 
 };
 
@@ -27,6 +57,7 @@ class Program{
     }
 
     void draw(SDL_Renderer *renderer){
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
 

@@ -67,7 +67,12 @@ class Object1{
     }
 
     std::vector<line> getLines(){
-
+        return std::vector<line>{
+            line{static_cast<float>(posX),static_cast<float>(posY),static_cast<float>(posX+sizeX),static_cast<float>(posY)},
+            line{static_cast<float>(posX),static_cast<float>(posY),static_cast<float>(posX),static_cast<float>(posY+sizeY)},
+            line{static_cast<float>(posX+sizeX),static_cast<float>(posY),static_cast<float>(posX+sizeX),static_cast<float>(posY+sizeY)},
+            line{static_cast<float>(posX),static_cast<float>(posY+sizeY),static_cast<float>(posX+sizeX),static_cast<float>(posY+sizeY)}
+        };
     }
 };
 
@@ -100,9 +105,15 @@ class Object2{
     }
 
     std::vector<line> getLines(){
-        
+        std::vector<line> lines;
+        for (int i=1; i<vertices.size(); i++){
+            lines.push_back(line{static_cast<float>(vertices[i-1][0]),static_cast<float>(vertices[i-1][1]),
+                static_cast<float>(vertices[i][0]),static_cast<float>(vertices[i][1])});
+        }
+        lines.push_back(line{static_cast<float>(vertices[vertices.size()-1][0]),static_cast<float>(vertices[vertices.size()-1][1]),
+            static_cast<float>(vertices[0][0]),static_cast<float>(vertices[0][1])});
+        return lines;
     }
-
 };
 
 class Objectholder{
@@ -207,7 +218,7 @@ class Camera{
     void render(SDL_Renderer*, Objectholder objs, int squareD, int lineD){
         std::vector<Ray> rays;
         for (int i=0; i<=FOV; i++){
-            rays.push_back(Ray{posX, posY, angle-FOV/2+i, 0, false});
+            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 0.f, false});
         }
         //do rendering
     }

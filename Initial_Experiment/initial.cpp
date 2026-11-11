@@ -11,6 +11,41 @@ namespace Pi{
     const double pi = 3.14159265359;
 }
 
+struct line{
+    float x1;
+    float y1;
+    float x2;
+    float y2;
+};
+
+std::array<float,3> collide(line line1, line line2){
+    //first number functions as a bool
+    float g1 = (line1.x1-line1.x2)/(line1.y1-line1.y2);
+    float g2 = (line2.x1-line2.x2)/(line2.y1-line2.y2);
+    float c1 = line1.y1-line1.x1*g1;
+    float c2 = line2.y1-line2.x1*g2;
+    float commonX = (c2-c1)/(g1-g2);
+    float commonY = commonX*g1+c1;
+    if (
+        (commonX>line1.x1&&commonX<line1.x2) || (commonX<line1.x1&&commonX>line1.x2)
+    ){
+        if (
+            (commonX>line2.x1&&commonX<line2.x2) || (commonX<line2.x1&&commonX>line2.x2)
+        ){
+            if (
+                (commonY>line1.y1&&commonY<line1.y2) || (commonY<line1.y1&&commonY>line1.y2)
+            ){
+                if (
+                    (commonY>line2.y1&&commonY<line2.y2) || (commonY<line2.y1&&commonY>line2.y2)
+                ){
+                    return std::array<float,3>{1,commonX,commonY};
+                }
+            }
+        }
+    }
+    return std::array<float,3>{0,commonX,commonY};
+}
+
 class Object1{
     //rectangle
     private:
@@ -29,6 +64,10 @@ class Object1{
         SDL_SetRenderDrawColor(renderer, 128, 128, 255, 255);
         SDL_FRect rect = {posX+squareD/2-rootPos[0], posY+squareD/2-rootPos[1], static_cast<float>(sizeX), static_cast<float>(sizeY)};
         SDL_RenderFillRect(renderer, &rect);
+    }
+
+    std::vector<line> getLines(){
+
     }
 };
 
@@ -58,6 +97,10 @@ class Object2{
             V[2].position.y=vertices[i][1]-rootPos[1]+squareD/2;
             SDL_RenderGeometry(renderer, NULL, V, 3, NULL, 0);
         }
+    }
+
+    std::vector<line> getLines(){
+        
     }
 
 };
@@ -92,6 +135,7 @@ class Objectholder{
     bool collision(std::array<float,2> start, std::array<float,2> end){
         //do collision detection
 
+
         return false;
     }
 };
@@ -99,8 +143,8 @@ class Objectholder{
 struct Ray{
     float posX;
     float posY;
-    int angle;
-    int colldist;
+    float angle;
+    float colldist;
     bool coll;
 };
 

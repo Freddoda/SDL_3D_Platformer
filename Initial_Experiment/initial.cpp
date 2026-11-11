@@ -20,23 +20,52 @@ struct line{
 
 std::array<float,3> collide(line line1, line line2){
     //first number functions as a bool
-    float g1 = (line1.x1-line1.x2)/(line1.y1-line1.y2);
-    float g2 = (line2.x1-line2.x2)/(line2.y1-line2.y2);
-    float c1 = line1.y1-line1.x1*g1;
-    float c2 = line2.y1-line2.x1*g2;
-    float commonX = (c2-c1)/(g1-g2);
-    float commonY = commonX*g1+c1;
+    float commonX;
+    float commonY;
+    float g1; float c1;
+    float g2; float c2;
+    bool l1vert = false;
+    if (line1.x1==line1.x2){
+        l1vert = true;
+        commonX=line1.x1;
+    } else {
+        g1 = (line1.y1-line1.y2)/(line1.x1-line1.x2);
+        c1 = line1.y1-line1.x1*g1;
+    }
+    bool l2vert = false;
+    if (line2.x1==line2.x2){
+        l2vert = true;
+        commonX=line2.x1;
+    } else {
+        g2 = (line2.y1-line2.y2)/(line2.x1-line2.x2);
+        c2 = line2.y1-line2.x1*g2;
+    }
+    if (l1vert&&l2vert){
+        return std::array<float,3>{0,0,0};
+    }
+    if (!(l1vert||l2vert)){
+        if (g1==g2){
+            return std::array<float,3>{0,0,0};
+        }
+        commonX = (c2-c1)/(g1-g2);
+    }
+    if (!l1vert){
+        commonY = commonX*g1+c1;
+    } else {
+        commonY = commonX*g2+c2;
+    }
+
     if (
-        (commonX>line1.x1&&commonX<line1.x2) || (commonX<line1.x1&&commonX>line1.x2)
+        (commonX>=line1.x1&&commonX<=line1.x2) || (commonX<=line1.x1&&commonX>=line1.x2)
     ){
         if (
-            (commonX>line2.x1&&commonX<line2.x2) || (commonX<line2.x1&&commonX>line2.x2)
+            (commonX>=line2.x1&&commonX<=line2.x2) || (commonX<=line2.x1&&commonX>=line2.x2)
         ){
             if (
-                (commonY>line1.y1&&commonY<line1.y2) || (commonY<line1.y1&&commonY>line1.y2)
+                (commonY>=line1.y1&&commonY<=line1.y2) || (commonY<=line1.y1&&commonY>=line1.y2)
             ){
                 if (
-                    (commonY>line2.y1&&commonY<line2.y2) || (commonY<line2.y1&&commonY>line2.y2)
+                    (commonY>=line2.y1&&commonY<=line2.y2) || (commonY<=line2.y1&&commonY>=line2.y2)
                 ){
                     return std::array<float,3>{1,commonX,commonY};
                 }
@@ -143,11 +172,30 @@ class Objectholder{
         }
     }
 
-    bool collision(std::array<float,2> start, std::array<float,2> end){
-        //do collision detection
+    std::vector<std::array<float,2>> collision(line line1){
+        std::vector<std::array<float,2>> collPoints;
+        std::vector<line> lines;
+        std::array<float,3> cache;
 
+        for (Object1 obj : Obj1){
+            for (line L: obj.getLines()){
+                lines.push_back(L);
+            }
+        }
+        for (Object2 obj : Obj2){
+            for (line L: obj.getLines()){
+                lines.push_back(L);
+            }
+        }
 
-        return false;
+        for (line L : lines){
+            cache = collide(line1, L);
+            if (cache[0]==1){
+                collPoints.push_back(std::array<float,2>{cache[1],cache[2]});
+            }
+        }
+
+        return collPoints;
     }
 };
 
@@ -195,12 +243,20 @@ class Camera{
         }
         //add collision later
         if (keys[SDL_SCANCODE_W]){
-            posX+=sin(angle/180.f*Pi::pi);
-            posY+=cos(angle/180.f*Pi::pi);
+            if (objs.collision(line{posX,posY,posX+static_cast<float>(sin(angle/180.f*Pi::pi)),posY}).size()==0){
+                posX+=sin(angle/180.f*Pi::pi);
+            }
+            if (objs.collision(line{posX,posY,posX,posY+static_cast<float>(cos(angle/180.f*Pi::pi))}).size()==0){
+                posY+=cos(angle/180.f*Pi::pi);
+            }
         }
         if (keys[SDL_SCANCODE_S]){
-            posX-=sin(angle/180.f*Pi::pi);
-            posY-=cos(angle/180.f*Pi::pi);
+            if (objs.collision(line{posX,posY,posX-static_cast<float>(sin(angle/180.f*Pi::pi)),posY}).size()==0){
+                posX-=sin(angle/180.f*Pi::pi);
+            }
+            if (objs.collision(line{posX,posY,posX,posY-static_cast<float>(cos(angle/180.f*Pi::pi))}).size()==0){
+                posY-=cos(angle/180.f*Pi::pi);
+            }
         }
     }
 
@@ -209,7 +265,7 @@ class Camera{
         for (int x=0; x<=10; x++){
             for (int y=0; y<=10; y++){
                 if ((x-5)*(x-5)+(y-5)*(y-5)<=25){
-                    SDL_RenderPoint(renderer, static_cast<float>(squareD/2+x), static_cast<float>(squareD/2+y));
+                    SDL_RenderPoint(renderer, static_cast<float>(squareD/2+x-5), static_cast<float>(squareD/2+y-5));
                 }
             }
         }

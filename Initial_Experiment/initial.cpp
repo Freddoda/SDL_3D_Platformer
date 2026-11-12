@@ -56,16 +56,16 @@ std::array<float,3> collide(line line1, line line2){
     }
 
     if (
-        (commonX>=line1.x1&&commonX<=line1.x2) || (commonX<=line1.x1&&commonX>=line1.x2)
+        (commonX>=line1.x1-0.05&&commonX<=line1.x2+0.05) || (commonX<=line1.x1+0.05&&commonX>=line1.x2-0.05)
     ){
         if (
-            (commonX>=line2.x1&&commonX<=line2.x2) || (commonX<=line2.x1&&commonX>=line2.x2)
+            (commonX>=line2.x1-0.05&&commonX<=line2.x2+0.05) || (commonX<=line2.x1+0.05&&commonX>=line2.x2-0.05)
         ){
             if (
-                (commonY>=line1.y1&&commonY<=line1.y2) || (commonY<=line1.y1&&commonY>=line1.y2)
+                (commonY>=line1.y1-0.05&&commonY<=line1.y2+0.05) || (commonY<=line1.y1+0.05&&commonY>=line1.y2-0.05)
             ){
                 if (
-                    (commonY>=line2.y1&&commonY<=line2.y2) || (commonY<=line2.y1&&commonY>=line2.y2)
+                    (commonY>=line2.y1-0.05&&commonY<=line2.y2+0.05) || (commonY<=line2.y1+0.05&&commonY>=line2.y2-0.05)
                 ){
                     return std::array<float,3>{1,commonX,commonY};
                 }
@@ -271,12 +271,43 @@ class Camera{
         }
     }
 
-    void render(SDL_Renderer*, Objectholder objs, int squareD, int lineD){
+    void render(SDL_Renderer* renderer, Objectholder objs, int squareD, int lineD){
         std::vector<Ray> rays;
+        std::vector<std::array<float,2>> points;
+        std::array<float,2> closest;
         for (int i=0; i<=FOV; i++){
-            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 0.f, false});
+            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 255, false});
         }
-        //do rendering
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        for (int i=0; i<rays.size(); i++){
+            points=objs.collision(line{rays[i].posX,rays[i].posY,
+            static_cast<float>(rays[i].posX+rays[i].colldist*sin(rays[i].angle/180*Pi::pi)),
+            static_cast<float>(rays[i].posY+rays[i].colldist*cos(rays[i].angle/180*Pi::pi))});
+            if (points.size()>0){
+                closest=points[0];
+                for (std::array<float,2> point : points){
+                    if ( (pow(point[0]-rays[i].posX,2)+pow(point[1]-rays[i].posY,2)) < (pow(closest[0]-rays[i].posX,2)+pow(closest[1]-rays[i].posY,2)) ){
+                        closest = point;
+                    }
+                    rays[i].coll=true;
+                    rays[i].colldist= pow( pow(closest[0]-rays[i].posX,2)+pow(closest[1]-rays[i].posY,2) ,0.5);
+                }
+            }
+            SDL_RenderLine(renderer, squareD/2,squareD/2,
+            static_cast<float>(squareD/2+rays[i].colldist*sin(rays[i].angle/180*Pi::pi)),
+            static_cast<float>(squareD/2+rays[i].colldist*cos(rays[i].angle/180*Pi::pi)));
+        }
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_FRect drawRect{0.f, static_cast<float>(squareD), static_cast<float>(squareD), static_cast<float>(lineD)};
+        SDL_RenderFillRect(renderer, &drawRect);
+        drawRect.w=squareD/FOV;
+        for (int i=0; i<rays.size(); i++){
+            if (rays[i].coll){
+            drawRect.x= squareD - ((i+1)*squareD)/FOV;
+            SDL_SetRenderDrawColor(renderer, 0, 0, 255-rays[i].colldist, 255);
+            SDL_RenderFillRect(renderer, &drawRect);
+            }
+        }
     }
 };
 

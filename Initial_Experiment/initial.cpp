@@ -20,6 +20,7 @@ struct line{
 
 std::array<float,3> collide(line line1, line line2){
     //first number functions as a bool
+    //[1]&[2] are coords
     float commonX;
     float commonY;
     float g1; float c1;
@@ -172,8 +173,8 @@ class Objectholder{
         }
     }
 
-    std::vector<std::array<float,2>> collision(line line1){
-        std::vector<std::array<float,2>> collPoints;
+    std::vector<std::array<float,3>> collision(line line1){
+        std::vector<std::array<float,3>> collPoints; // x,y,angle
         std::vector<line> lines;
         std::array<float,3> cache;
 
@@ -191,7 +192,14 @@ class Objectholder{
         for (line L : lines){
             cache = collide(line1, L);
             if (cache[0]==1){
-                collPoints.push_back(std::array<float,2>{cache[1],cache[2]});
+                float angle;
+                if (L.y1==L.y2){
+                    angle = 90;
+                } else {
+                    angle = std::atan((L.x1-L.x2)/(L.y1-L.y2))*(180.f/static_cast<float>(Pi::pi));
+                }
+                std::cout<<angle<<std::endl;
+                collPoints.push_back(std::array<float,3>{cache[1],cache[2],angle});
             }
         }
 
@@ -203,6 +211,7 @@ struct Ray{
     float posX;
     float posY;
     float angle;
+    float collAngle;
     float colldist;
     bool coll;
 };
@@ -273,10 +282,10 @@ class Camera{
 
     void render(SDL_Renderer* renderer, Objectholder objs, int squareD, int lineD){
         std::vector<Ray> rays;
-        std::vector<std::array<float,2>> points;
-        std::array<float,2> closest;
+        std::vector<std::array<float,3>> points;
+        std::array<float,3> closest;
         for (int i=0; i<=FOV; i++){
-            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 255, false});
+            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 0, 255, false});
         }
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         for (int i=0; i<rays.size(); i++){
@@ -285,12 +294,13 @@ class Camera{
             static_cast<float>(rays[i].posY+rays[i].colldist*cos(rays[i].angle/180*Pi::pi))});
             if (points.size()>0){
                 closest=points[0];
-                for (std::array<float,2> point : points){
+                for (std::array<float,3> point : points){
                     if ( (pow(point[0]-rays[i].posX,2)+pow(point[1]-rays[i].posY,2)) < (pow(closest[0]-rays[i].posX,2)+pow(closest[1]-rays[i].posY,2)) ){
                         closest = point;
                     }
                     rays[i].coll=true;
                     rays[i].colldist= pow( pow(closest[0]-rays[i].posX,2)+pow(closest[1]-rays[i].posY,2) ,0.5);
+                    rays[i].collAngle=closest[2];
                 }
             }
             SDL_RenderLine(renderer, squareD/2,squareD/2,
@@ -301,10 +311,23 @@ class Camera{
         SDL_FRect drawRect{0.f, static_cast<float>(squareD), static_cast<float>(squareD), static_cast<float>(lineD)};
         SDL_RenderFillRect(renderer, &drawRect);
         drawRect.w=squareD/FOV;
+        int distMult = 80;
         for (int i=0; i<rays.size(); i++){
             if (rays[i].coll){
             drawRect.x= squareD - ((i+1)*squareD)/FOV;
-            SDL_SetRenderDrawColor(renderer, 0, 0, 255-rays[i].colldist, 255);
+            if (rays[i].collAngle>30){
+                SDL_SetRenderDrawColor(renderer, (255-128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
+                    (127+128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
+                    (127)/(pow(2,rays[i].colldist/distMult)), 255);
+            } else if (rays[i].collAngle>0-30){
+                SDL_SetRenderDrawColor(renderer, (127)/(pow(2,rays[i].colldist/distMult)), 
+                    (255-128*(rays[i].collAngle+30)/60)/(pow(2,rays[i].colldist/distMult)), 
+                    (127+128*(rays[i].collAngle+30)/60)/(pow(2,rays[i].colldist/distMult)), 255);
+            } else if (rays[i].collAngle>-90){
+                SDL_SetRenderDrawColor(renderer, (127+128*(rays[i].collAngle+90)/60)/(pow(2,rays[i].colldist/distMult)), 
+                    (127)/(pow(2,rays[i].colldist/distMult)), 
+                    (255-128*(rays[i].collAngle+90)/60)/(pow(2,rays[i].colldist/distMult)), 255);
+            }
             SDL_RenderFillRect(renderer, &drawRect);
             }
         }

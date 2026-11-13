@@ -198,7 +198,6 @@ class Objectholder{
                 } else {
                     angle = std::atan((L.x1-L.x2)/(L.y1-L.y2))*(180.f/static_cast<float>(Pi::pi));
                 }
-                std::cout<<angle<<std::endl;
                 collPoints.push_back(std::array<float,3>{cache[1],cache[2],angle});
             }
         }

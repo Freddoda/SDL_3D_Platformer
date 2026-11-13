@@ -309,26 +309,27 @@ class Camera{
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_FRect drawRect{0.f, static_cast<float>(squareD), static_cast<float>(squareD), static_cast<float>(lineD)};
         SDL_RenderFillRect(renderer, &drawRect);
-        drawRect.w=squareD/FOV;
         int distMult = 80;
-        for (int i=0; i<rays.size(); i++){
+        for (int i=rays.size()-1; i>0; i--){
+            drawRect.x= squareD - ((i)*squareD)/FOV;
             if (rays[i].coll){
-            drawRect.x= squareD - ((i+1)*squareD)/FOV;
-            if (rays[i].collAngle>30){
-                SDL_SetRenderDrawColor(renderer, (255-128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
-                    (127+128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
-                    (127)/(pow(2,rays[i].colldist/distMult)), 255);
-            } else if (rays[i].collAngle>0-30){
-                SDL_SetRenderDrawColor(renderer, (127)/(pow(2,rays[i].colldist/distMult)), 
-                    (255-128*(rays[i].collAngle+30)/60)/(pow(2,rays[i].colldist/distMult)), 
-                    (127+128*(rays[i].collAngle+30)/60)/(pow(2,rays[i].colldist/distMult)), 255);
-            } else if (rays[i].collAngle>-90){
-                SDL_SetRenderDrawColor(renderer, (127+128*(rays[i].collAngle+90)/60)/(pow(2,rays[i].colldist/distMult)), 
-                    (127)/(pow(2,rays[i].colldist/distMult)), 
-                    (255-128*(rays[i].collAngle+90)/60)/(pow(2,rays[i].colldist/distMult)), 255);
+                if (rays[i].collAngle>30){
+                    SDL_SetRenderDrawColor(renderer, (255-128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
+                        (127+128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
+                        (127)/(pow(2,rays[i].colldist/distMult)), 255);
+                } else if (rays[i].collAngle>0-30){
+                    SDL_SetRenderDrawColor(renderer, (127)/(pow(2,rays[i].colldist/distMult)), 
+                        (255-128*(rays[i].collAngle+30)/60)/(pow(2,rays[i].colldist/distMult)), 
+                        (127+128*(rays[i].collAngle+30)/60)/(pow(2,rays[i].colldist/distMult)), 255);
+                } else if (rays[i].collAngle>-90){
+                    SDL_SetRenderDrawColor(renderer, (127+128*(rays[i].collAngle+90)/60)/(pow(2,rays[i].colldist/distMult)), 
+                        (127)/(pow(2,rays[i].colldist/distMult)), 
+                        (255-128*(rays[i].collAngle+90)/60)/(pow(2,rays[i].colldist/distMult)), 255);
+                }
+            } else {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             }
             SDL_RenderFillRect(renderer, &drawRect);
-            }
         }
     }
 };
@@ -387,7 +388,7 @@ int main(int argc, char* argv[]){
     std::chrono::nanoseconds frametime(16666667);
 
     int squareD = 720;
-    int lineD = 80;
+    int lineD = 100;
 
     window = SDL_CreateWindow("2.5D", squareD, squareD + lineD, SDL_WINDOW_OPENGL);
 

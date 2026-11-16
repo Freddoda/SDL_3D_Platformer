@@ -20,14 +20,19 @@ struct Plane{
 struct Line{
     Point point1;
     Point point2;
-    //line is the intersection of the plains
-    Plane plane1; //x&y
-    Plane plane2; //x&z
-    Plane plane3; //y&z
+    //line is the intersection of the planes
+    Plane plane1;
+    Plane plane2;
 
     Line(Point p1, Point p2){
         point1=p1;point2=p2;
         //calculate planes
+
+        if (point1.z==point2.z){
+
+        } else {
+            
+        }
     }
 };
 

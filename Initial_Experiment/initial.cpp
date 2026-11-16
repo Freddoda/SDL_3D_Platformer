@@ -284,7 +284,7 @@ class Camera{
         std::vector<std::array<float,3>> points;
         std::array<float,3> closest;
         for (int i=0; i<=FOV; i++){
-            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 0, 255, false});
+            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 0, 350, false});
         }
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         for (int i=0; i<rays.size(); i++){
@@ -417,8 +417,6 @@ int main(int argc, char* argv[]){
 
         program.update(keys, mouseX, mouseY);
         program.draw(renderer);
-
-        SDL_UpdateWindowSurface(window);
 
         end = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch());
         duration = end - start;

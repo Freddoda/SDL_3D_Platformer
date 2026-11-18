@@ -283,8 +283,8 @@ class Camera{
         std::vector<Ray> rays;
         std::vector<std::array<float,3>> points;
         std::array<float,3> closest;
-        for (int i=0; i<=FOV; i++){
-            rays.push_back(Ray{posX, posY, static_cast<float>(angle-FOV/2+i), 0, 350, false});
+        for (int i=0; i<=squareD; i++){
+            rays.push_back(Ray{posX, posY, static_cast<float>(angle+FOV/2-static_cast<float>(i)*(static_cast<float>(FOV)/squareD)), 0, 350, false});
         }
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         for (int i=0; i<rays.size(); i++){
@@ -306,12 +306,15 @@ class Camera{
             static_cast<float>(squareD/2+rays[i].colldist*sin(rays[i].angle/180*Pi::pi)),
             static_cast<float>(squareD/2+rays[i].colldist*cos(rays[i].angle/180*Pi::pi)));
         }
+        
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_FRect drawRect{0.f, static_cast<float>(squareD), static_cast<float>(squareD), static_cast<float>(lineD)};
         SDL_RenderFillRect(renderer, &drawRect);
-        int distMult = 80;
-        for (int i=rays.size()-1; i>0; i--){
-            drawRect.x= squareD - ((i)*squareD)/FOV;
+        drawRect.h=1;
+        drawRect.w=1;
+        int distMult = 120;
+        for (int i=0; i<rays.size(); i++){
+            drawRect.x= i;
             if (rays[i].coll){
                 if (rays[i].collAngle>30){
                     SDL_SetRenderDrawColor(renderer, (255-128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
@@ -329,7 +332,12 @@ class Camera{
             } else {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             }
-            SDL_RenderFillRect(renderer, &drawRect);
+            for (int h=0; h<=lineD; h++){
+                if (abs(lineD/2-h)<(50.f*static_cast<float>(lineD))/rays[i].colldist){
+                    drawRect.y=squareD+h;
+                    SDL_RenderFillRect(renderer, &drawRect);
+                }
+            }
         }
     }
 };
@@ -347,7 +355,10 @@ class Program{
         camera = Camera(0,0,0,100);
         objs = Objectholder(std::vector<Object1>{Object1(40,50,20,30)}, 
             std::vector<Object2>{Object2(std::vector<std::array<int,2>>{
-                std::array<int,2>{-40,-60},std::array<int,2>{-50,-40},std::array<int,2>{0,-20},std::array<int,2>{-30,-70}})}); //put some stuff in
+                std::array<int,2>{-40,-60},std::array<int,2>{-50,-40},std::array<int,2>{0,-20},std::array<int,2>{-30,-70}}),
+            Object2(std::vector<std::array<int,2>>{
+                std::array<int,2>{-120,60},std::array<int,2>{-120,40},std::array<int,2>{-20,95},
+                std::array<int,2>{-50,100},std::array<int,2>{0,150}})}); //put some stuff in
     }
 
     void update(const bool *keys, float &mouseX, float &mouseY){
@@ -388,7 +399,7 @@ int main(int argc, char* argv[]){
     std::chrono::nanoseconds frametime(16666667);
 
     int squareD = 720;
-    int lineD = 100;
+    int lineD = 120;
 
     window = SDL_CreateWindow("2.5D", squareD, squareD + lineD, SDL_WINDOW_OPENGL);
 

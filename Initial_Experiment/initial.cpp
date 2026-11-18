@@ -284,7 +284,7 @@ class Camera{
         std::vector<std::array<float,3>> points;
         std::array<float,3> closest;
         for (int i=0; i<=squareD; i++){
-            rays.push_back(Ray{posX, posY, static_cast<float>(angle+FOV/2-static_cast<float>(i)*(static_cast<float>(FOV)/squareD)), 0, 350, false});
+            rays.push_back(Ray{posX, posY, static_cast<float>(angle+FOV/2-static_cast<float>(i)*(static_cast<float>(FOV)/squareD)), 0, 450, false});
         }
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         for (int i=0; i<rays.size(); i++){

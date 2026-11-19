@@ -225,18 +225,18 @@ class Camera{
         }
         //add collision later
         if (keys[SDL_SCANCODE_W]){
-            if (objs.collision(line{posX,posY,posX+static_cast<float>(sin(angle/180.f*Pi::pi)),posY}).size()==0){
+            if (objs.collision(line{std::array<float,2>{posX,posY},std::array<float,2>{static_cast<float>(sin(angle/180.f*Pi::pi)),0}}).size()==0){
                 posX+=sin(angle/180.f*Pi::pi);
             }
-            if (objs.collision(line{posX,posY,posX,posY+static_cast<float>(cos(angle/180.f*Pi::pi))}).size()==0){
+            if (objs.collision(line{std::array<float,2>{posX,posY},std::array<float,2>{0,static_cast<float>(cos(angle/180.f*Pi::pi))}}).size()==0){
                 posY+=cos(angle/180.f*Pi::pi);
             }
         }
         if (keys[SDL_SCANCODE_S]){
-            if (objs.collision(line{posX,posY,posX-static_cast<float>(sin(angle/180.f*Pi::pi)),posY}).size()==0){
+            if (objs.collision(line{std::array<float,2>{posX,posY},std::array<float,2>{-static_cast<float>(sin(angle/180.f*Pi::pi)),0}}).size()==0){
                 posX-=sin(angle/180.f*Pi::pi);
             }
-            if (objs.collision(line{posX,posY,posX,posY-static_cast<float>(cos(angle/180.f*Pi::pi))}).size()==0){
+            if (objs.collision(line{std::array<float,2>{posX,posY},std::array<float,2>{0,-static_cast<float>(cos(angle/180.f*Pi::pi))}}).size()==0){
                 posY-=cos(angle/180.f*Pi::pi);
             }
         }

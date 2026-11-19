@@ -284,11 +284,8 @@ class Camera{
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_FRect drawRect{0.f, static_cast<float>(squareD), static_cast<float>(squareD), static_cast<float>(lineD)};
         SDL_RenderFillRect(renderer, &drawRect);
-        drawRect.h=1;
-        drawRect.w=1;
         int distMult = 120;
         for (int i=0; i<rays.size(); i++){
-            drawRect.x= i;
             if (rays[i].coll){
                 if (rays[i].collAngle>30){
                     SDL_SetRenderDrawColor(renderer, (255-128*(rays[i].collAngle-30)/60)/(pow(2,rays[i].colldist/distMult)), 
@@ -308,8 +305,7 @@ class Camera{
             }
             for (int h=0; h<=lineD; h++){
                 if (abs(lineD/2-h)<(50.f*static_cast<float>(lineD))/rays[i].colldist){
-                    drawRect.y=squareD+h;
-                    SDL_RenderFillRect(renderer, &drawRect);
+                    SDL_RenderPoint(renderer,i,squareD+h);
                 }
             }
         }

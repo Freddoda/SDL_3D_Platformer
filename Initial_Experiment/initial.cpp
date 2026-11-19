@@ -12,68 +12,42 @@ namespace Pi{
 }
 
 struct line{
-    float x1;
-    float y1;
-    float x2;
-    float y2;
+    std::array<float,2> posVect;
+    std::array<float,2> dirVect;
 };
 
 std::array<float,3> collide(line line1, line line2){
-    //first number functions as a bool
-    //[1]&[2] are coords
-    float commonX;
-    float commonY;
-    float g1; float c1;
-    float g2; float c2;
-    bool l1vert = false;
-    if (line1.x1==line1.x2){
-        l1vert = true;
-        commonX=line1.x1;
-    } else {
-        g1 = (line1.y1-line1.y2)/(line1.x1-line1.x2);
-        c1 = line1.y1-line1.x1*g1;
-    }
-    bool l2vert = false;
-    if (line2.x1==line2.x2){
-        l2vert = true;
-        commonX=line2.x1;
-    } else {
-        g2 = (line2.y1-line2.y2)/(line2.x1-line2.x2);
-        c2 = line2.y1-line2.x1*g2;
-    }
-    if (l1vert&&l2vert){
-        return std::array<float,3>{0,0,0};
-    }
-    if (!(l1vert||l2vert)){
-        if (g1==g2){
-            return std::array<float,3>{0,0,0};
-        }
-        commonX = (c2-c1)/(g1-g2);
-    }
-    if (!l1vert){
-        commonY = commonX*g1+c1;
-    } else {
-        commonY = commonX*g2+c2;
+    std::array<float,3> collPoint = std::array<float,3> {0,0,0}; //bool, x, y
+    float dist1;
+    float dist2;
+
+    if (line1.dirVect[0]*line2.dirVect[1]==line1.dirVect[1]*line2.dirVect[0]){
+        return collPoint;
     }
 
-    if (
-        (commonX>=line1.x1-0.05&&commonX<=line1.x2+0.05) || (commonX<=line1.x1+0.05&&commonX>=line1.x2-0.05)
-    ){
-        if (
-            (commonX>=line2.x1-0.05&&commonX<=line2.x2+0.05) || (commonX<=line2.x1+0.05&&commonX>=line2.x2-0.05)
-        ){
-            if (
-                (commonY>=line1.y1-0.05&&commonY<=line1.y2+0.05) || (commonY<=line1.y1+0.05&&commonY>=line1.y2-0.05)
-            ){
-                if (
-                    (commonY>=line2.y1-0.05&&commonY<=line2.y2+0.05) || (commonY<=line2.y1+0.05&&commonY>=line2.y2-0.05)
-                ){
-                    return std::array<float,3>{1,commonX,commonY};
-                }
-            }
+    dist1 = ( ( line2.dirVect[0]*(line1.posVect[1]-line2.posVect[1]) + line2.dirVect[1]*(line2.posVect[0]-line1.posVect[0]) ) 
+                / 
+            (line1.dirVect[0]*line2.dirVect[1]-line1.dirVect[1]*line2.dirVect[0]) );
+
+    if (line2.dirVect[0]!=0){
+        dist2 = ( (line1.posVect[0]-line2.posVect[0]+dist1*line1.dirVect[0])
+                    /
+                line2.dirVect[0] );
+    } else {
+        dist2 = ( (line1.posVect[1]-line2.posVect[1]+dist1*line1.dirVect[1])
+                    /
+                line2.dirVect[1] );
+    }
+
+    if (dist1>=0 && dist1<=1) {
+        if (dist2>=0 && dist2<=1){
+            collPoint[0]=1;
+            collPoint[1]=line1.posVect[0]+dist1*line1.dirVect[0];
+            collPoint[2]=line1.posVect[1]+dist1*line1.dirVect[1];
         }
     }
-    return std::array<float,3>{0,commonX,commonY};
+    
+    return collPoint;
 }
 
 class Object1{
@@ -98,10 +72,10 @@ class Object1{
 
     std::vector<line> getLines(){
         return std::vector<line>{
-            line{static_cast<float>(posX),static_cast<float>(posY),static_cast<float>(posX+sizeX),static_cast<float>(posY)},
-            line{static_cast<float>(posX),static_cast<float>(posY),static_cast<float>(posX),static_cast<float>(posY+sizeY)},
-            line{static_cast<float>(posX+sizeX),static_cast<float>(posY),static_cast<float>(posX+sizeX),static_cast<float>(posY+sizeY)},
-            line{static_cast<float>(posX),static_cast<float>(posY+sizeY),static_cast<float>(posX+sizeX),static_cast<float>(posY+sizeY)}
+            line{std::array<float,2>{static_cast<float>(posX),static_cast<float>(posY)},std::array<float,2>{static_cast<float>(sizeX),0.f}},
+            line{std::array<float,2>{static_cast<float>(posX),static_cast<float>(posY)},std::array<float,2>{0.f,static_cast<float>(sizeY)}},
+            line{std::array<float,2>{static_cast<float>(posX+sizeX),static_cast<float>(posY)},std::array<float,2>{0.f,static_cast<float>(sizeY)}},
+            line{std::array<float,2>{static_cast<float>(posX),static_cast<float>(posY+sizeY)},std::array<float,2>{static_cast<float>(sizeX),0.f}}
         };
     }
 };
@@ -137,8 +111,8 @@ class Object2{
     std::vector<line> getLines(){
         std::vector<line> lines;
         for (int i=1; i<vertices.size(); i++){
-            lines.push_back(line{static_cast<float>(vertices[i-1][0]),static_cast<float>(vertices[i-1][1]),
-                static_cast<float>(vertices[i][0]),static_cast<float>(vertices[i][1])});
+            lines.push_back(line{std::array<float,2>{static_cast<float>(vertices[i-1][0]),static_cast<float>(vertices[i-1][1])},
+                std::array<float,2>{static_cast<float>(vertices[i][0]-vertices[i-1][0]),static_cast<float>(vertices[i][1]-vertices[i-1][1])}});
         }
         lines.push_back(line{static_cast<float>(vertices[vertices.size()-1][0]),static_cast<float>(vertices[vertices.size()-1][1]),
             static_cast<float>(vertices[0][0]),static_cast<float>(vertices[0][1])});
@@ -193,10 +167,10 @@ class Objectholder{
             cache = collide(line1, L);
             if (cache[0]==1){
                 float angle;
-                if (L.y1==L.y2){
+                if (L.dirVect[1]==0){
                     angle = 90;
                 } else {
-                    angle = std::atan((L.x1-L.x2)/(L.y1-L.y2))*(180.f/static_cast<float>(Pi::pi));
+                    angle = std::atan(L.dirVect[0]/L.dirVect[1])*(180.f/static_cast<float>(Pi::pi));
                 }
                 collPoints.push_back(std::array<float,3>{cache[1],cache[2],angle});
             }
@@ -288,9 +262,9 @@ class Camera{
         }
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         for (int i=0; i<rays.size(); i++){
-            points=objs.collision(line{rays[i].posX,rays[i].posY,
-            static_cast<float>(rays[i].posX+rays[i].colldist*sin(rays[i].angle/180*Pi::pi)),
-            static_cast<float>(rays[i].posY+rays[i].colldist*cos(rays[i].angle/180*Pi::pi))});
+            points=objs.collision(line{std::array<float,2>{rays[i].posX,rays[i].posY},
+            std::array<float,2>{static_cast<float>(rays[i].colldist*sin(rays[i].angle/180*Pi::pi)),
+            static_cast<float>(rays[i].colldist*cos(rays[i].angle/180*Pi::pi))}});
             if (points.size()>0){
                 closest=points[0];
                 for (std::array<float,3> point : points){

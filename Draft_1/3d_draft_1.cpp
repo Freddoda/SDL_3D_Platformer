@@ -3,49 +3,38 @@
 #include<chrono>
 #include<thread>
 
-struct Point{
+struct Vect3d{
     float x;
     float y;
     float z;
 };
 
 struct Plane{
-    //ax+by+cz+d=0
-    float a;
-    float b;
-    float c;
-    float d;
+    //do plane stuff
 };
 
 struct Line{
-    Point point1;
-    Point point2;
-    //line is the intersection of the planes
-    Plane plane1;
-    Plane plane2;
+    Vect3d posVect;
+    Vect3d dirVect;
 
-    Line(Point p1, Point p2){
-        point1=p1;point2=p2;
-        //calculate planes
 
-        if (point1.z==point2.z){
-
-        } else {
-            
-        }
+    Line(Vect3d posVect, Vect3d dirVect){
+        this->posVect=posVect; this->dirVect=dirVect;
+  
+        //if anything needs calculating
     }
 };
 
 struct Polygon{
-    Point point1;
-    Point point2;
-    Point point3;
+    Vect3d vertex1;
+    Vect3d vertex2;
+    Vect3d vertex3;
 
-    Plane plane;
 
-    Polygon(Point p1, Point p2, Point p3){
-        point1=p1;point2=p2;point3=p3;
-        //calculate plane
+    Polygon(Vect3d p1, Vect3d p2, Vect3d p3){
+        this->vertex1=p1; this->vertex2=p2; this->vertex3=p3;
+
+        //if anything needs calculating
     }
 };
 

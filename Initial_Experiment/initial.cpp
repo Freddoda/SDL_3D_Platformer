@@ -114,8 +114,8 @@ class Object2{
             lines.push_back(line{std::array<float,2>{static_cast<float>(vertices[i-1][0]),static_cast<float>(vertices[i-1][1])},
                 std::array<float,2>{static_cast<float>(vertices[i][0]-vertices[i-1][0]),static_cast<float>(vertices[i][1]-vertices[i-1][1])}});
         }
-        lines.push_back(line{static_cast<float>(vertices[vertices.size()-1][0]),static_cast<float>(vertices[vertices.size()-1][1]),
-            static_cast<float>(vertices[0][0]),static_cast<float>(vertices[0][1])});
+        lines.push_back(line{std::array<float,2>{static_cast<float>(vertices[vertices.size()-1][0]),static_cast<float>(vertices[vertices.size()-1][1])},
+            std::array<float,2>{static_cast<float>(vertices[0][0]-vertices[vertices.size()-1][0]),static_cast<float>(vertices[0][1]-vertices[vertices.size()-1][1])}});
         return lines;
     }
 };

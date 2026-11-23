@@ -10,19 +10,31 @@ struct Vect3d{
 };
 
 struct Plane{
-    //do plane stuff
+    //Ax+By+Cz=D
+    float xcoeff;
+    float ycoeff;
+    float zcoeff;
+    float constant;
+};
+
+struct Polygon{
+    Plane plane;
+    Vect3d vert1;
+    Vect3d vert2;
+    Vect3d vert3;
+
+    Polygon(Vect3d vert1, Vect3d vert2, Vect3d vert3){
+        this->vert1 = vert1;
+        this->vert2 = vert2;
+        this->vert3 = vert3;
+
+        //calculate the plane
+    }
 };
 
 struct Line{
     Vect3d posVect;
     Vect3d dirVect;
-
-
-    Line(Vect3d posVect, Vect3d dirVect){
-        this->posVect=posVect; this->dirVect=dirVect;
-  
-        //if anything needs calculating
-    }
 };
 
 struct Polygon{

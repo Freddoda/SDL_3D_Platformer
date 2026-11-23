@@ -37,19 +37,6 @@ struct Line{
     Vect3d dirVect;
 };
 
-struct Polygon{
-    Vect3d vertex1;
-    Vect3d vertex2;
-    Vect3d vertex3;
-
-
-    Polygon(Vect3d p1, Vect3d p2, Vect3d p3){
-        this->vertex1=p1; this->vertex2=p2; this->vertex3=p3;
-
-        //if anything needs calculating
-    }
-};
-
 class Camera{
     private:
     float posX; float posY; float posZ;

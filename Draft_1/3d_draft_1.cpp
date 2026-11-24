@@ -28,7 +28,17 @@ struct Polygon{
         this->vert2 = vert2;
         this->vert3 = vert3;
 
-        //calculate the plane
+        Vect3d dirVect12 = {vert1.x-vert2.x, vert1.y-vert2.y, vert1.z-vert2.z};
+        Vect3d dirVect13 = {vert1.x-vert3.x, vert1.y-vert3.y, vert1.z-vert3.z};;
+        Vect3d crossProd;
+        crossProd.x = dirVect12.y*dirVect13.z-dirVect12.z*dirVect13.y;
+        crossProd.y = dirVect12.z*dirVect13.x-dirVect12.x*dirVect13.z;
+        crossProd.z = dirVect12.x*dirVect13.y-dirVect12.y*dirVect13.x;
+
+        this->plane.xcoeff = crossProd.x;
+        this->plane.ycoeff = crossProd.y;
+        this->plane.zcoeff = crossProd.z;
+        this->plane.constant = crossProd.x*vert1.x+crossProd.y*vert1.y+crossProd.z*vert1.z;
     }
 };
 

@@ -3,6 +3,10 @@
 #include<chrono>
 #include<thread>
 
+namespace Pi{
+    const double pi = 3.14159265359;
+}
+
 struct Vect3d{
     float x;
     float y;

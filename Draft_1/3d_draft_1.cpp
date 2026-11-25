@@ -2,6 +2,9 @@
 #include<SDL3/SDL_main.h>
 #include<chrono>
 #include<thread>
+#include<vector>
+#include<cmath>
+#include<iostream>
 
 namespace Pi{
     const double pi = 3.14159265359;
@@ -51,11 +54,19 @@ struct Line{
     Vect3d dirVect;
 };
 
+struct Ray{
+    Line rayLine;
+    Vect3d collPoint;
+    bool coll;
+};
+
 class Camera{
     private:
     float posX; float posY; float posZ;
     float angleA; //up&down ; -80,80
     float angleB; //left&right ; 0,360
+    float speed;
+    float FOV;
 
     public:
 
@@ -63,31 +74,48 @@ class Camera{
     
     Camera(float posX, float posY, float posZ, float angleA, float angleB){
         this->posX=posX;this->posY=posY;this->posZ=posZ;this->angleA=angleA;this->angleB=angleB;
+        speed = 1;
+        FOV = 100;
     }
 
     void update(const bool *keys, float mouseX, float mouseY, int windSize){
-        angleA+=(mouseY-windSize/2);
-        if (angleA<-80){
+        angleA-=(mouseY-windSize/2)/4;
+        if (angleA<(-80.1)){
             angleA=-80;
         } else if (angleA>80){
             angleA=80;
         }
-        angleB+=(mouseX-windSize/2);
+        angleB+=(mouseX-windSize/2)/4;
         if (angleB<0){
             angleB+=360;
         } else if (angleB>360){
             angleB-=360;
         }
 
-
+        if (keys[SDL_SCANCODE_W]){
+            posZ+= speed*std::sin(Pi::pi*(angleA/180.f));
+            posX+= speed*std::cos(Pi::pi*(angleA/180.f))*std::cos(Pi::pi*(angleB/180.f));
+            posY+= speed*std::cos(Pi::pi*(angleA/180.f))*std::sin(Pi::pi*(angleB/180.f));
+        }
+        if (keys[SDL_SCANCODE_S]){
+            posZ-= speed*std::sin(Pi::pi*(angleA/180.f));
+            posX-= speed*std::cos(Pi::pi*(angleA/180.f))*std::cos(Pi::pi*(angleB/180.f));
+            posY-= speed*std::cos(Pi::pi*(angleA/180.f))*std::sin(Pi::pi*(angleB/180.f));
+        }
     }
 
     void render(SDL_GPUDevice* gpu, SDL_GPUCommandBuffer* commBuffer){
+        std::vector<Ray> rays;
 
     }
 };
 
 class Cube{
+
+};
+
+class Objectholder{
+    std::vector<Cube> cubes;
 
 };
 
@@ -152,6 +180,8 @@ int main(int argc, char* argv[]){
         return 2;
     }
     SDL_ClaimWindowForGPUDevice(gpu, window);
+
+    SDL_WarpMouseInWindow(window,static_cast<float>(windSize)/2,static_cast<float>(windSize)/2);
 
     while (!done) {
         start = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch());

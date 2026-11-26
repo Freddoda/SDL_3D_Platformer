@@ -3,6 +3,7 @@
 #include<chrono>
 #include<thread>
 #include<vector>
+#include<array>
 #include<cmath>
 #include<iostream>
 
@@ -60,6 +61,81 @@ struct Ray{
     bool coll;
 };
 
+class Cube{
+    private:
+    Vect3d pos;
+    Vect3d size;
+    std::vector<Polygon> polygons;
+
+    public:
+
+    Cube(std::array<float,3> position, std::array<float,3> dimensions){
+        pos.x=position[0]; pos.y=position[1]; pos.z=position[2];
+        size.x=dimensions[0]; size.y=dimensions[1]; size.z=dimensions[2];
+
+        //calculate the polygons
+    }
+
+
+    std::vector<Polygon> getPolygons(){
+        return polygons;
+    }
+
+};
+
+class Objectholder{
+    private:
+    std::vector<Cube> cubes;
+    std::vector<Polygon> cubePolygons;
+    std::vector<Polygon> polygons;
+
+    public:
+    Objectholder(){}
+
+    void giveCubes(std::vector<Cube> cubes){
+        this->cubes = cubes;
+
+        for (Cube &cube : cubes){
+            for (Polygon polygon : cube.getPolygons()){
+                cubePolygons.push_back(polygon);
+            }
+        }
+    }
+
+    void givePolys(std::vector<Polygon> polys){
+        this->polygons = polys;
+    }
+
+    void rayCollide(Ray* ray){
+        std::vector<Vect3d> collPoints;
+        std::vector<Polygon> polys;
+        float coeff;
+
+        polys.insert(polys.end(),polygons.begin(),polygons.end());
+        polys.insert(polys.end(),cubePolygons.begin(),cubePolygons.end());
+
+        for (Polygon &poly : polys){
+            if (poly.plane.xcoeff*ray->rayLine.dirVect.x + 
+                poly.plane.ycoeff*ray->rayLine.dirVect.y + 
+                poly.plane.zcoeff*ray->rayLine.dirVect.z == 0) {
+                continue;
+            }
+            coeff = (poly.plane.constant - (poly.plane.xcoeff*ray->rayLine.posVect.x + 
+                    poly.plane.ycoeff*ray->rayLine.posVect.y + 
+                    poly.plane.zcoeff*ray->rayLine.posVect.z) )
+                    / 
+                    (poly.plane.xcoeff*ray->rayLine.dirVect.x + 
+                    poly.plane.ycoeff*ray->rayLine.dirVect.y + 
+                    poly.plane.zcoeff*ray->rayLine.dirVect.z);
+            if (coeff>1 || coeff<0){
+                continue;
+            }
+
+            //project onto flat plane & check if in polygon
+        }
+    }
+};
+
 class Camera{
     private:
     float posX; float posY; float posZ;
@@ -102,27 +178,35 @@ class Camera{
             posX-= speed*std::cos(Pi::pi*(angleA/180.f))*std::cos(Pi::pi*(angleB/180.f));
             posY-= speed*std::cos(Pi::pi*(angleA/180.f))*std::sin(Pi::pi*(angleB/180.f));
         }
+        //add more movement options
     }
 
-    void render(SDL_GPUDevice* gpu, SDL_GPUCommandBuffer* commBuffer){
+    void render(SDL_GPUDevice* gpu, SDL_GPUCommandBuffer* commBuffer, Objectholder &objectHolder, int wSize){
         std::vector<Ray> rays;
+        float visDist = 600;
 
+        for(float n1=0; n1<wSize; n1++){
+            for(float n2=0; n2<wSize; n2++){
+                rays.push_back(Ray{Line{Vect3d{posX,posY,posZ},
+                    Vect3d{visDist*std::cos(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))*std::cos(Pi::pi*((angleB+(n2*FOV/wSize)-FOV/2)/180.f)), 
+                        visDist*std::cos(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))*std::sin(Pi::pi*((angleB+(n2*FOV/wSize)-FOV/2)/180.f)), 
+                        visDist*std::sin(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))}}, NULL, false});
+            }
+        }
+
+        for (Ray &ray : rays){
+            objectHolder.rayCollide(&ray);
+        }
+
+        //draw
     }
-};
-
-class Cube{
-
-};
-
-class Objectholder{
-    std::vector<Cube> cubes;
-
 };
 
 class Program{
     private:
     int wSize;
     Camera camera;
+    Objectholder objectHolder;
 
     public:
     Program(int windowSize){
@@ -139,7 +223,7 @@ class Program{
     void draw(SDL_GPUDevice* gpu){
         SDL_GPUCommandBuffer* commBuffer = SDL_AcquireGPUCommandBuffer(gpu);
 
-        camera.render(gpu, commBuffer);
+        camera.render(gpu, commBuffer, objectHolder, wSize);
 
         SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commBuffer);
         SDL_WaitForGPUFences(gpu, true, &fence, 1);

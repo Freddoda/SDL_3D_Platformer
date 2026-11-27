@@ -39,6 +39,7 @@ struct Polygon{
     Line side1;
     Line side2;
     Line side3;
+    Line normalVect;
 
     Polygon(Vect3d vert1, Vect3d vert2, Vect3d vert3){
         this->side1.posVect = vert1;
@@ -54,6 +55,9 @@ struct Polygon{
         crossProd.x = dirVect12.y*dirVect13.z-dirVect12.z*dirVect13.y;
         crossProd.y = dirVect12.z*dirVect13.x-dirVect12.x*dirVect13.z;
         crossProd.z = dirVect12.x*dirVect13.y-dirVect12.y*dirVect13.x;
+
+        this->normalVect.posVect=vert1;
+        this->normalVect.dirVect=crossProd;
 
         this->plane.xcoeff = crossProd.x;
         this->plane.ycoeff = crossProd.y;
@@ -143,13 +147,45 @@ class Objectholder{
             //project onto flat plane & check if in polygon
             for (Line &side : std::array<Line,3>{poly.side1,poly.side2,poly.side3}){
                 //algebra has been simplified down, the checking vector is [1,0], its bounds are not checked, only the bounds on the polygon side are
-                if (side.dirVect.y==0){
-                    continue;
+                
+                if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.z){
+                    if (side.dirVect.y==0){
+                        continue;
+                    }
+                    if (side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)>1 || 
+                        side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)<0){
+                        continue;
+                    }
+                    if (side.posVect.x-(ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x)+ 
+                        side.dirVect.x*(side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)) <0){
+                        continue;
+                    }
+                } else if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.y){
+                    if (side.dirVect.z==0){
+                        continue;
+                    }
+                    if (side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)>1 || 
+                        side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)<0){
+                        continue;
+                    }
+                    if (side.posVect.x-(ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x)+ 
+                        side.dirVect.x*(side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)) <0){
+                        continue;
+                    }
+                } else if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.x){
+                    if (side.dirVect.z==0){
+                        continue;
+                    }
+                    if (side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)>1 || 
+                        side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)<0){
+                        continue;
+                    }
+                    if (side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)+ 
+                        side.dirVect.y*(side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)) <0){
+                        continue;
+                    }
                 }
-                if (side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)>1 || 
-                    side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)<0){
-                    continue;
-                }
+
                 if (inside){
                     inside=false;
                     continue;
@@ -301,7 +337,7 @@ int main(int argc, char* argv[]){
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create window: %s\n", SDL_GetError());
         return 1;
     }
-    gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL, true, NULL);
+    gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB, true, NULL);
     if (gpu == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create gpu: %s\n", SDL_GetError());
         return 2;

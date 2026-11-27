@@ -120,6 +120,8 @@ class Objectholder{
     void rayCollide(Ray* ray){
         std::vector<Vect3d> collPoints;
         std::vector<Polygon> polys;
+        std::array<float,2> collpoint2d;
+        std::array<std::array<float,2>,2> side2d;
         float coeff;
         bool inside = false;
 
@@ -149,41 +151,29 @@ class Objectholder{
                 //algebra has been simplified down, the checking vector is [1,0], its bounds are not checked, only the bounds on the polygon side are
                 
                 if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.z){
-                    if (side.dirVect.y==0){
-                        continue;
-                    }
-                    if (side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)>1 || 
-                        side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)<0){
-                        continue;
-                    }
-                    if (side.posVect.x-(ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x)+ 
-                        side.dirVect.x*(side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)) <0){
-                        continue;
-                    }
+                    side2d = std::array<std::array<float,2>,2> 
+                    {std::array<float,2>{side.posVect.x,side.posVect.y},std::array<float,2>{side.dirVect.x,side.dirVect.y}};
+                    collpoint2d = std::array<float,2> {ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x,ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y};
                 } else if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.y){
-                    if (side.dirVect.z==0){
-                        continue;
-                    }
-                    if (side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)>1 || 
-                        side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)<0){
-                        continue;
-                    }
-                    if (side.posVect.x-(ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x)+ 
-                        side.dirVect.x*(side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)) <0){
-                        continue;
-                    }
+                    side2d = std::array<std::array<float,2>,2> 
+                    {std::array<float,2>{side.posVect.x,side.posVect.z},std::array<float,2>{side.dirVect.x,side.dirVect.z}};
+                    collpoint2d = std::array<float,2> {ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x,ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z};
                 } else if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.x){
-                    if (side.dirVect.z==0){
-                        continue;
-                    }
-                    if (side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)>1 || 
-                        side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)<0){
-                        continue;
-                    }
-                    if (side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)+ 
-                        side.dirVect.y*(side.posVect.z-(ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z)) <0){
-                        continue;
-                    }
+                    side2d = std::array<std::array<float,2>,2> 
+                    {std::array<float,2>{side.posVect.y,side.posVect.z},std::array<float,2>{side.dirVect.y,side.dirVect.z}};
+                    collpoint2d = std::array<float,2> {ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y,ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z};
+                }
+
+                if (side2d[1][1]==0){
+                    continue;
+                }
+                if (side2d[0][1]-collpoint2d[1]>1 || 
+                    side2d[0][1]-collpoint2d[1]<0){
+                    continue;
+                }
+                if (side2d[0][0]-collpoint2d[0]+ 
+                    side2d[1][0]*(side2d[0][1]-collpoint2d[1]) <0){
+                    continue;
                 }
 
                 if (inside){

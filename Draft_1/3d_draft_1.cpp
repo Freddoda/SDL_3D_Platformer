@@ -15,6 +15,10 @@ struct Vect3d{
     float x;
     float y;
     float z;
+
+    Vect3d  operator-(const Vect3d& v){
+        return Vect3d{x-v.x,y-v.y,z-v.z};
+    }
 };
 
 struct Plane{
@@ -25,16 +29,24 @@ struct Plane{
     float constant;
 };
 
+struct Line{
+    Vect3d posVect;
+    Vect3d dirVect;
+};
+
 struct Polygon{
     Plane plane;
-    Vect3d vert1;
-    Vect3d vert2;
-    Vect3d vert3;
+    Line side1;
+    Line side2;
+    Line side3;
 
     Polygon(Vect3d vert1, Vect3d vert2, Vect3d vert3){
-        this->vert1 = vert1;
-        this->vert2 = vert2;
-        this->vert3 = vert3;
+        this->side1.posVect = vert1;
+        this->side1.dirVect = vert2-vert1;
+        this->side2.posVect = vert2;
+        this->side2.dirVect = vert3-vert2;
+        this->side3.posVect = vert3;
+        this->side3.dirVect = vert1-vert3;
 
         Vect3d dirVect12 = {vert1.x-vert2.x, vert1.y-vert2.y, vert1.z-vert2.z};
         Vect3d dirVect13 = {vert1.x-vert3.x, vert1.y-vert3.y, vert1.z-vert3.z};;
@@ -48,11 +60,6 @@ struct Polygon{
         this->plane.zcoeff = crossProd.z;
         this->plane.constant = crossProd.x*vert1.x+crossProd.y*vert1.y+crossProd.z*vert1.z;
     }
-};
-
-struct Line{
-    Vect3d posVect;
-    Vect3d dirVect;
 };
 
 struct Ray{
@@ -110,6 +117,7 @@ class Objectholder{
         std::vector<Vect3d> collPoints;
         std::vector<Polygon> polys;
         float coeff;
+        bool inside = false;
 
         polys.insert(polys.end(),polygons.begin(),polygons.end());
         polys.insert(polys.end(),cubePolygons.begin(),cubePolygons.end());
@@ -131,7 +139,42 @@ class Objectholder{
                 continue;
             }
 
+            inside = false;
             //project onto flat plane & check if in polygon
+            for (Line &side : std::array<Line,3>{poly.side1,poly.side2,poly.side3}){
+                //algebra has been simplified down, the checking vector is [1,0], its bounds are not checked, only the bounds on the polygon side are
+                if (side.dirVect.y==0){
+                    continue;
+                }
+                if (side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)>1 || 
+                    side.posVect.y-(ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y)<0){
+                    continue;
+                }
+                if (inside){
+                    inside=false;
+                    continue;
+                }
+                inside=true;
+            }
+
+            if (inside){
+                collPoints.push_back(Vect3d{ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x,
+                                            ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y,
+                                            ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z});
+            }
+        }
+
+        if (collPoints.size()==0){
+            return;
+        }
+
+        ray->coll=true;
+        ray->collPoint=collPoints[0];
+        for (Vect3d point : collPoints){
+            if (point.x*point.x+point.y*point.y+point.z*point.z<
+                ray->collPoint.x*ray->collPoint.x+ray->collPoint.y*ray->collPoint.y+ray->collPoint.z*ray->collPoint.z){
+                ray->collPoint=point;
+            }
         }
     }
 };
@@ -188,9 +231,9 @@ class Camera{
         for(float n1=0; n1<wSize; n1++){
             for(float n2=0; n2<wSize; n2++){
                 rays.push_back(Ray{Line{Vect3d{posX,posY,posZ},
-                    Vect3d{visDist*std::cos(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))*std::cos(Pi::pi*((angleB+(n2*FOV/wSize)-FOV/2)/180.f)), 
-                        visDist*std::cos(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))*std::sin(Pi::pi*((angleB+(n2*FOV/wSize)-FOV/2)/180.f)), 
-                        visDist*std::sin(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))}}, NULL, false});
+                    Vect3d{static_cast<float>(visDist*std::cos(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))*std::cos(Pi::pi*((angleB+(n2*FOV/wSize)-FOV/2)/180.f))), 
+                        static_cast<float>(visDist*std::cos(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f))*std::sin(Pi::pi*((angleB+(n2*FOV/wSize)-FOV/2)/180.f))), 
+                        static_cast<float>(visDist*std::sin(Pi::pi*((angleA+(n1*FOV/wSize)-FOV/2)/180.f)))}}, NULL, false});
             }
         }
 

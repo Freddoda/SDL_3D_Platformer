@@ -168,12 +168,12 @@ class Objectholder{
                 if (side2d[1][1]==0){
                     continue;
                 }
-                if (side2d[0][1]-collpoint2d[1]>1 || 
-                    side2d[0][1]-collpoint2d[1]<0){
+                if ((side2d[0][1]-collpoint2d[1])/(-side2d[1][1])>1 || 
+                    (side2d[0][1]-collpoint2d[1])/(-side2d[1][1])<0){
                     continue;
                 }
                 if (side2d[0][0]-collpoint2d[0]+ 
-                    side2d[1][0]*(side2d[0][1]-collpoint2d[1]) <0){
+                    side2d[1][0]*(side2d[0][1]-collpoint2d[1])/(-side2d[1][1]) <0){
                     continue;
                 }
 

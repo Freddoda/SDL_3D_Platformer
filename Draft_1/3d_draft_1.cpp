@@ -6,6 +6,7 @@
 #include<array>
 #include<cmath>
 #include<iostream>
+#include<algorithm>
 
 namespace Pi{
     const double pi = 3.14159265359;
@@ -150,15 +151,15 @@ class Objectholder{
             for (Line &side : std::array<Line,3>{poly.side1,poly.side2,poly.side3}){
                 //algebra has been simplified down, the checking vector is [1,0], its bounds are not checked, only the bounds on the polygon side are
                 
-                if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.z){
+                if (std::max({std::abs(poly.normalVect.dirVect.x),std::abs(poly.normalVect.dirVect.y),std::abs(poly.normalVect.dirVect.z)})==std::abs(poly.normalVect.dirVect.z)){
                     side2d = std::array<std::array<float,2>,2> 
                     {std::array<float,2>{side.posVect.x,side.posVect.y},std::array<float,2>{side.dirVect.x,side.dirVect.y}};
                     collpoint2d = std::array<float,2> {ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x,ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y};
-                } else if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.y){
+                } else if (std::max({std::abs(poly.normalVect.dirVect.x),std::abs(poly.normalVect.dirVect.y),std::abs(poly.normalVect.dirVect.z)})==std::abs(poly.normalVect.dirVect.y)){
                     side2d = std::array<std::array<float,2>,2> 
                     {std::array<float,2>{side.posVect.x,side.posVect.z},std::array<float,2>{side.dirVect.x,side.dirVect.z}};
                     collpoint2d = std::array<float,2> {ray->rayLine.posVect.x+coeff*ray->rayLine.dirVect.x,ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z};
-                } else if (std::max(poly.normalVect.dirVect.x,poly.normalVect.dirVect.y,poly.normalVect.dirVect.z)==poly.normalVect.dirVect.x){
+                } else if (std::max({std::abs(poly.normalVect.dirVect.x),std::abs(poly.normalVect.dirVect.y),std::abs(poly.normalVect.dirVect.z)})==std::abs(poly.normalVect.dirVect.x)){
                     side2d = std::array<std::array<float,2>,2> 
                     {std::array<float,2>{side.posVect.y,side.posVect.z},std::array<float,2>{side.dirVect.y,side.dirVect.z}};
                     collpoint2d = std::array<float,2> {ray->rayLine.posVect.y+coeff*ray->rayLine.dirVect.y,ray->rayLine.posVect.z+coeff*ray->rayLine.dirVect.z};
@@ -197,8 +198,12 @@ class Objectholder{
         ray->coll=true;
         ray->collPoint=collPoints[0];
         for (Vect3d point : collPoints){
-            if (point.x*point.x+point.y*point.y+point.z*point.z<
-                ray->collPoint.x*ray->collPoint.x+ray->collPoint.y*ray->collPoint.y+ray->collPoint.z*ray->collPoint.z){
+            if ((point.x-ray->rayLine.posVect.x)*(point.x-ray->rayLine.posVect.x)+
+                (point.y-ray->rayLine.posVect.y)*(point.y-ray->rayLine.posVect.y)+
+                (point.z-ray->rayLine.posVect.z)*(point.z-ray->rayLine.posVect.z)<
+                (ray->collPoint.x-ray->rayLine.posVect.x)*(ray->collPoint.x-ray->rayLine.posVect.x)+
+                (ray->collPoint.y-ray->rayLine.posVect.y)*(ray->collPoint.y-ray->rayLine.posVect.y)+
+                (ray->collPoint.z-ray->rayLine.posVect.z)*(ray->collPoint.z-ray->rayLine.posVect.z)){
                 ray->collPoint=point;
             }
         }
@@ -250,9 +255,10 @@ class Camera{
         //add more movement options
     }
 
-    void render(SDL_GPUDevice* gpu, SDL_GPUCommandBuffer* commBuffer, Objectholder &objectHolder, int wSize){
+    void render(SDL_Renderer* renderer, Objectholder &objectHolder, int wSize){
         std::vector<Ray> rays;
         float visDist = 600;
+        SDL_SetRenderDrawColor(renderer, 128, 128, 255, 255);
 
         for(float n1=0; n1<wSize; n1++){
             for(float n2=0; n2<wSize; n2++){
@@ -267,7 +273,11 @@ class Camera{
             objectHolder.rayCollide(&ray);
         }
 
-        //draw
+        for (int n=0; n<wSize*wSize; n++){
+            if (rays[n].coll){
+                SDL_RenderPoint(renderer, n%wSize, std::floor(n/wSize));
+            }
+        }
     }
 };
 
@@ -281,6 +291,8 @@ class Program{
     Program(int windowSize){
         wSize=windowSize;
         camera = Camera(0, 0, 0, 0, 0);
+        objectHolder = Objectholder();
+        objectHolder.givePolys(std::vector<Polygon>{Polygon(Vect3d{30,30,40},Vect3d{50,30,40},Vect3d{90,30,20})});
     }
 
     void update(const bool *keys, float mouseX, float mouseY, Uint32 mButtons, SDL_Window* window){
@@ -289,21 +301,20 @@ class Program{
 
     }
 
-    void draw(SDL_GPUDevice* gpu){
-        SDL_GPUCommandBuffer* commBuffer = SDL_AcquireGPUCommandBuffer(gpu);
+    void draw(SDL_Renderer* renderer){
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
 
-        camera.render(gpu, commBuffer, objectHolder, wSize);
+        camera.render(renderer, objectHolder, wSize);
 
-        SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commBuffer);
-        SDL_WaitForGPUFences(gpu, true, &fence, 1);
-        SDL_ReleaseGPUFence(gpu, fence);
+        SDL_RenderPresent(renderer);
         return;
     }
 };
 
 
 int main(int argc, char* argv[]){
-    SDL_GPUDevice* gpu;
+    SDL_Renderer* renderer;
     SDL_Window* window; 
     
     bool done = false;
@@ -327,12 +338,11 @@ int main(int argc, char* argv[]){
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create window: %s\n", SDL_GetError());
         return 1;
     }
-    gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB, true, NULL);
-    if (gpu == NULL) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create gpu: %s\n", SDL_GetError());
+    renderer = SDL_CreateRenderer(window,NULL);
+    if (renderer == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create renderer: %s\n", SDL_GetError());
         return 2;
     }
-    SDL_ClaimWindowForGPUDevice(gpu, window);
 
     SDL_WarpMouseInWindow(window,static_cast<float>(windSize)/2,static_cast<float>(windSize)/2);
 
@@ -353,11 +363,12 @@ int main(int argc, char* argv[]){
 
 
         program.update(keys, mouseX, mouseY, mButtons, window);
-        program.draw(gpu);
+        program.draw(renderer);
 
 
         end = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch());
         duration = end - start;
+        std::cout<<duration.count()<<'/'<<frametime.count()<<std::endl;
         if (frametime>duration){
             std::this_thread::sleep_for(frametime-duration);
         }
@@ -365,7 +376,7 @@ int main(int argc, char* argv[]){
 
 
     SDL_DestroyWindow(window);
-    SDL_DestroyGPUDevice(gpu);
+    SDL_DestroyRenderer(renderer);
     SDL_Quit();
     return 0;
 }
